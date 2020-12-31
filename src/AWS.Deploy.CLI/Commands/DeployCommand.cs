@@ -207,6 +207,7 @@ namespace AWS.Deploy.CLI.Commands
             switch (optionSetting.Type)
             {
                 case OptionSettingValueType.Bool:
+                case OptionSettingValueType.Double:
                 case OptionSettingValueType.Int:
                 case OptionSettingValueType.String:
                     _toolInteractiveService.WriteLine($"{optionSettingNumber}. {optionSetting.Name}: {value}");
@@ -370,7 +371,7 @@ namespace AWS.Deploy.CLI.Commands
 
                     var clusters = await _awsResourceQueryer.GetListOfECSClusters(_session);
 
-                    settingValue = _consoleUtilities.AskUserToChooseOrCreateNew(clusters,
+                    settingValue = _consoleUtilities.AskUserToChoose(clusters,
                         "Select ECS Cluster to deploy to:",
                         currentValue?.ToString());
                 }

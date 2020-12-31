@@ -1,13 +1,13 @@
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Amazon.CDK;
-using Amazon.CDK.AWS.AutoScaling;
 using Amazon.CDK.AWS.EC2;
 using Amazon.CDK.AWS.ECS;
 using Amazon.CDK.AWS.ECS.Patterns;
+using Amazon.CDK.AWS.Events;
 using Amazon.CDK.AWS.IAM;
-using System.IO;
-using System.Collections.Generic;
 using ConsoleAppEcsFargateTask.Configurations;
-using Protocol = Amazon.CDK.AWS.ECS.Protocol;
 using Schedule = Amazon.CDK.AWS.ApplicationAutoScaling.Schedule;
 
 namespace ConsoleAppEcsFargateTask
@@ -47,11 +47,23 @@ namespace ConsoleAppEcsFargateTask
                 });
             }
 
+
+#if (UseExistingECSCluster)
+            var cluster = Cluster.FromClusterAttributes(this, "Cluster", new ClusterAttributes
+            {
+                ClusterArn = configuration.ExistingClusterArn,
+                // ClusterName is required field, but is ignored
+                ClusterName = ""
+                SecurityGroups = new ISecurityGroup[0],
+                Vpc = vpc
+            });
+#else
             var cluster = new Cluster(this, "Cluster", new ClusterProps
             {
                 Vpc = vpc,
-                ClusterName = configuration.ClusterName
+                ClusterName = configuration.NewClusterName
             });
+#endif
 
             IRole executionRole;
             if (configuration.ApplicationIAMRole.CreateNew)
@@ -75,6 +87,8 @@ namespace ConsoleAppEcsFargateTask
             var taskDefinition = new FargateTaskDefinition(this, "TaskDefinition", new FargateTaskDefinitionProps
             {
                 ExecutionRole = executionRole,
+                Cpu = configuration.CpuLimit,
+                MemoryLimitMiB = configuration.MemoryLimit
             });
 
             var logging = new AwsLogDriver(new AwsLogDriverProps
@@ -104,19 +118,39 @@ namespace ConsoleAppEcsFargateTask
                     BuildArgs = GetDockerBuildArgs("DockerBuildArgs-Placeholder")
 #endif
                 }),
-                Logging = logging
+                Logging = logging,
+                Environment = configuration.EnvironmentVariables.DecodeJsonDictionary()
             });
 
-            new ScheduledFargateTask(this, "FargateService", new ScheduledFargateTaskProps
+            var portMappings =
+                configuration.PortMappings.DecodeJsonDictionary()
+                    .Where(x => int.TryParse(x.Key, out _) && int.TryParse(x.Value, out _))
+                    .Select(x => new PortMapping
+                    {
+                        HostPort = int.Parse(x.Key),
+                        ContainerPort = int.Parse(x.Value)
+                    })
+                    .Cast<IPortMapping>()
+                    .ToArray();
+            container.AddPortMappings(portMappings);
+
+            if (!string.IsNullOrEmpty(configuration.Schedule))
             {
-                Cluster = cluster,
-                Schedule = Schedule.Expression(configuration.Schedule),
-                Vpc = vpc,
-                ScheduledFargateTaskDefinitionOptions = new ScheduledFargateTaskDefinitionOptions
-                {
-                    TaskDefinition = taskDefinition
-                }
-            });
+                new ScheduledFargateTask(this,
+                    "FargateScheduledTask",
+                    new ScheduledFargateTaskProps
+                    {
+                        Cluster = cluster,
+                        DesiredTaskCount = configuration.DesiredTaskCount,
+                        Schedule = Schedule.Expression(configuration.Schedule),
+                        Vpc = vpc,
+
+                        ScheduledFargateTaskDefinitionOptions = new ScheduledFargateTaskDefinitionOptions
+                        {
+                            TaskDefinition = taskDefinition
+                        }
+                    });
+            }
         }
 
 #if (AddDockerBuildArgs)
@@ -131,5 +165,16 @@ namespace ConsoleAppEcsFargateTask
                 );
         }
 #endif
+    }
+
+    public static class StringExtensions
+    {
+        public static Dictionary<string, string> DecodeJsonDictionary(this string s)
+        {
+            if (string.IsNullOrEmpty(s))
+                return new Dictionary<string, string>();
+
+            return System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(s);
+        }
     }
 }

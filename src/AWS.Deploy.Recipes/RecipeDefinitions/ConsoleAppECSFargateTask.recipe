@@ -14,7 +14,7 @@
         {
             "Tests": [
                 {
-                    "Type" : "MSProjectSdkAttribute",
+                    "Type": "MSProjectSdkAttribute",
                     "Condition": {
                         "Value": "Microsoft.NET.Sdk"
                     }
@@ -35,14 +35,14 @@
                 }
             ],
             "Effect": {
-                "Pass": {"Include": true}
+                "Pass": { "Include": true }
             }
         },
 
         {
             "Tests": [
                 {
-                    "Type":"FileExists",
+                    "Type": "FileExists",
                     "Condition": {
                         "FileName": "Dockerfile"
                     }
@@ -75,14 +75,43 @@
 
     "OptionSettings": [
         {
-            "Id": "ClusterName",
-            "Name": "Cluster Name",
-            "Description": "The name of the ECS cluster.",
+            "Id": "UseExistingECSCluster",
+            "Name": "Use Existing ECS Cluster",
+            "Description": "Do you want to use an existing ECS Cluster for the deployment?",
+            "Type": "Bool",
+            "DefaultValue": "false",
+            "AdvancedSetting": true,
+            "Updatable": true
+        },
+        {
+            "Id": "ExistingClusterArn",
+            "Name": "Cluster Arn",
+            "Description": "The arn of the existing ECS cluster.",
             "Type": "String",
             "TypeHint": "ECSCluster",
+            "AdvancedSetting": false,
+            "Updatable": true,
+            "DependsOn": [
+                {
+                    "Id": "UseExistingECSCluster",
+                    "Value": "true"
+                }
+            ]
+        },
+        {
+            "Id": "NewClusterName",
+            "Name": "Cluster Name",
+            "Description": "The name of the new ECS cluster.",
+            "Type": "String",
             "DefaultValue": "{ProjectName}",
             "AdvancedSetting": false,
-            "Updatable": false
+            "Updatable": false,
+            "DependsOn": [
+                {
+                    "Id": "UseExistingECSCluster",
+                    "Value": "false"
+                }
+            ]
         },
         {
             "Id": "ApplicationIAMRole",
@@ -124,12 +153,39 @@
         {
             "Id": "Schedule",
             "Name": "Task Schedule",
-            "Description": "The schedule or rate (frequency) that determines when CloudWatch Events runs the rule.",
+            "Description": "The schedule or rate (frequency) that determines when CloudWatch Events runs the rule.  See here for more details https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html",
             "Type": "String",
             "TypeHint": "ECSTaskSchedule",
             "DefaultValue": "rate(1 hour)",
             "AdvancedSetting": false,
-            "Updatable": false
+            "Updatable": true
+        },
+        {
+            "Id": "DesiredTaskCount",
+            "Name": "Desired Task Count",
+            "Description": "The desired number of ECS tasks to run for the service.",
+            "Type": "Int",
+            "DefaultValue": "1",
+            "AdvancedSetting": true,
+            "Updatable": true
+        },
+        {
+            "Id": "CPU",
+            "Name": "vCPU",
+            "Description": "The number of cpu units used by the task.",
+            "Type": "Double",
+            "DefaultValue": "0.25",
+            "AdvancedSetting": true,
+            "Updatable": true
+        },
+        {
+            "Id": "Memory",
+            "Name": "Desired Task Count",
+            "Description": "The amount (in MiB) of memory used by the task.",
+            "Type": "Double",
+            "DefaultValue": "512",
+            "AdvancedSetting": true,
+            "Updatable": true
         },
         {
             "Id": "Vpc",
@@ -214,6 +270,24 @@
             "Description": "Specifies the docker execution directory where the docker build command will be executed from.",
             "Type": "String",
             "DefaultValue": "",
+            "AdvancedSetting": true,
+            "Updatable": true
+        },
+        {
+            "Id": "PortMappings",
+            "Name": "Port Mapping",
+            "Description": "Json Dictionary of Port Mappings: {'HostPort':'ContainerPort'}",
+            "Type": "String",
+            "DefaultValue": "{}",
+            "AdvancedSetting": true,
+            "Updatable": true
+        },
+        {
+            "Id": "EnvironmentVariables",
+            "Name": "Environment Variables",
+            "Description": "Json Dictionary of Environment Variables that will be passed into the running Container",
+            "Type": "String",
+            "DefaultValue": "{}",
             "AdvancedSetting": true,
             "Updatable": true
         }
