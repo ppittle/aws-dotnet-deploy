@@ -364,7 +364,17 @@ namespace AWS.Deploy.CLI.Commands
             }
             else if (setting.Type == OptionSettingValueType.Object)
             {
-                if (setting.TypeHint == OptionSettingTypeHint.IAMRole)
+                if (setting.TypeHint == OptionSettingTypeHint.ECSCluster)
+                {
+                    _toolInteractiveService.WriteLine(setting.Description);
+
+                    var clusters = await _awsResourceQueryer.GetListOfECSClusters(_session);
+
+                    settingValue = _consoleUtilities.AskUserToChooseOrCreateNew(clusters,
+                        "Select ECS Cluster to deploy to:",
+                        currentValue?.ToString());
+                }
+                else if (setting.TypeHint == OptionSettingTypeHint.IAMRole)
                 {
                     _toolInteractiveService.WriteLine(setting.Description);
                     var typeHintData = setting.GetTypeHintData<IAMRoleTypeHintData>();
