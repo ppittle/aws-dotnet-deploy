@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using AWS.Deploy.CLI.Common.UnitTests.IO;
 using AWS.Deploy.Common.DeploymentManifest;
 using AWS.Deploy.Common.IO;
 using Newtonsoft.Json;
@@ -20,6 +21,7 @@ namespace AWS.Deploy.CLI.Common.UnitTests.DeploymentManifestFile
         private readonly string _targetApplicationFullPath;
         private readonly string _targetApplicationDirectoryFullPath;
         private readonly IDeploymentManifestEngine _deploymentManifestEngine;
+        private readonly TestAppManager _testAppManager;
 
         private bool _isDisposed;
 
@@ -27,7 +29,8 @@ namespace AWS.Deploy.CLI.Common.UnitTests.DeploymentManifestFile
         {
             _fileManager = new FileManager();
             _directoryManager = new DirectoryManager();
-            var targetApplicationPath = Path.Combine("testapps", "WebAppWithDockerFile", "WebAppWithDockerFile.csproj");
+            _testAppManager = new TestAppManager();
+            var targetApplicationPath = _testAppManager.GetProjectPath(Path.Combine("testapps", "WebAppWithDockerFile", "WebAppWithDockerFile.csproj"));;
             _targetApplicationFullPath = _directoryManager.GetDirectoryInfo(targetApplicationPath).FullName;
             _targetApplicationDirectoryFullPath = _directoryManager.GetDirectoryInfo(targetApplicationPath).Parent.FullName;
             _deploymentManifestEngine = new DeploymentManifestEngine(_directoryManager, _fileManager);

@@ -4,8 +4,10 @@
 using System;
 using System.IO;
 using System.Linq;
+using AWS.Deploy.CLI.Common.UnitTests.IO;
 using AWS.Deploy.CLI.Extensions;
 using AWS.Deploy.CLI.IntegrationTests.Extensions;
+using AWS.Deploy.CLI.IntegrationTests.Helpers;
 using AWS.Deploy.CLI.IntegrationTests.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -19,6 +21,7 @@ namespace AWS.Deploy.CLI.IntegrationTests.SaveCdkDeploymentProject
         private readonly InMemoryInteractiveService _interactiveService;
         private readonly string _targetApplicationProjectPath;
         private readonly string _deploymentManifestFilePath;
+        private readonly TestAppManager _testAppManager;
 
         private bool _isDisposed;
         private string _saveDirectoryPath;
@@ -38,8 +41,10 @@ namespace AWS.Deploy.CLI.IntegrationTests.SaveCdkDeploymentProject
             _interactiveService = serviceProvider.GetService<InMemoryInteractiveService>();
             Assert.NotNull(_interactiveService);
 
-            _targetApplicationProjectPath = Path.Combine("testapps", "WebAppWithDockerFile", "WebAppWithDockerFile.csproj");
-            _deploymentManifestFilePath = Path.Combine("testapps", "WebAppWithDockerFile", "aws-deployments.json");
+            _testAppManager = new TestAppManager();
+
+            _targetApplicationProjectPath = _testAppManager.GetProjectPath(Path.Combine("testapps", "WebAppWithDockerFile", "WebAppWithDockerFile.csproj"));
+            _deploymentManifestFilePath = Path.Combine(Directory.GetParent(_targetApplicationProjectPath).FullName, "aws-deployments.json");
         }
 
         [Fact]
@@ -53,7 +58,7 @@ namespace AWS.Deploy.CLI.IntegrationTests.SaveCdkDeploymentProject
             await _app.Run(deployArgs);
 
             // Verify project is saved
-            _saveDirectoryPath = Path.Combine("testapps", "WebAppWithDockerFileCDK");
+            _saveDirectoryPath = Path.Combine(Directory.GetParent(_targetApplicationProjectPath).Parent!.FullName, "WebAppWithDockerFileCDK");
             var directoryInfo = new DirectoryInfo(_saveDirectoryPath);
             var stdOut = _interactiveService.StdOutReader.ReadAllLines();
             var successMessage = $"The CDK deployment project is saved at: {directoryInfo.FullName}";
@@ -85,7 +90,7 @@ namespace AWS.Deploy.CLI.IntegrationTests.SaveCdkDeploymentProject
             await _interactiveService.StdInWriter.WriteAsync(Environment.NewLine); // Select default recommendation
 
             // Generate and save the CDK deployment project
-            _saveDirectoryPath = Path.Combine("DeploymentProjects", "MyCdkApp");
+            _saveDirectoryPath = Path.Combine(Directory.GetParent(_targetApplicationProjectPath).Parent!.FullName, "DeploymentProjects", "MyCdkApp");
             var deployArgs = new[] { "deployment-project", "generate", "--project-path", _targetApplicationProjectPath, "--output", _saveDirectoryPath };
             var returnCode = await _app.Run(deployArgs);
 
@@ -122,7 +127,7 @@ namespace AWS.Deploy.CLI.IntegrationTests.SaveCdkDeploymentProject
             await _interactiveService.StdInWriter.WriteAsync(Environment.NewLine); // Select default recommendation
 
             // Generate and save the CDK deployment project
-            _saveDirectoryPath = Path.Combine("testapps", "WebAppWithDockerFile", "MyCdkApp");
+            _saveDirectoryPath = Path.Combine(Directory.GetParent(_targetApplicationProjectPath).FullName, "MyCdkApp");
             var deployArgs = new[] { "deployment-project", "generate", "--project-path", _targetApplicationProjectPath, "--output", _saveDirectoryPath };
             var returnCode = await _app.Run(deployArgs);
 
