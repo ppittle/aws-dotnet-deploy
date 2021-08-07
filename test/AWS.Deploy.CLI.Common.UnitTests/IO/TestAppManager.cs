@@ -13,17 +13,12 @@ namespace AWS.Deploy.CLI.Common.UnitTests.IO
     {
         public string GetProjectPath(string path)
         {
-            var tempDir = GetTempDir();
-            var parentDir = new DirectoryInfo("testapps");
-            parentDir.CopyTo(tempDir, true);
+            var tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            var sourceTestAppsDir = new DirectoryInfo("testapps");
+            var tempTestAppsPath = Path.Combine(tempDir, "testapps");
+            Directory.CreateDirectory(tempTestAppsPath);
+            sourceTestAppsDir.CopyTo(tempTestAppsPath, true);
             return Path.Combine(tempDir, path);
-        }
-
-        private string GetTempDir()
-        {
-            var tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-            Directory.CreateDirectory(tempDirectory);
-            return tempDirectory;
         }
     }
 }
