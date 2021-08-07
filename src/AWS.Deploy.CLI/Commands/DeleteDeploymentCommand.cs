@@ -68,10 +68,6 @@ namespace AWS.Deploy.CLI.Commands
                 await WaitForStackDelete(stackName);
                 _interactiveService.WriteLine($"{stackName}: deleted");
             }
-            catch (AmazonCloudFormationException)
-            {
-                throw new FailedToDeleteException($"Failed to delete {stackName} stack.");
-            }
             finally
             {
                 // Stop monitoring CloudFormation stack status once the deletion operation finishes
