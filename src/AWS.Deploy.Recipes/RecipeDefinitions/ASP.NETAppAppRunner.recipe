@@ -51,9 +51,12 @@
                 "Fail": { "Include": true }
             }
         }
-
     ],
-
+    "Validators": [
+        {
+            "ValidatorType": "ValidDockerfilePath"
+        }
+    ],
     "OptionSettings": [
         {
             "Id": "ServiceName",

@@ -10,6 +10,12 @@ namespace AWS.Deploy.Common.Recipes.Validation
     /// </summary>
     public interface IOptionSettingItemValidator
     {
-        ValidationResult Validate(object input);
+        /// <summary>
+        /// Validates an override value for an OptionSetting
+        /// </summary>
+        /// <param name="input">Raw input for the current OptionSetting</param>
+        /// <param name="recommendation">Current deployment recommendation, may be used if the validator needs to consider properties other than itself</param>
+        /// <returns>Whether or not the input is valid</returns>
+        ValidationResult Validate(object input, Recommendation recommendation);
     }
 }

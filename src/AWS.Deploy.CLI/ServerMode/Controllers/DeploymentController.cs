@@ -241,7 +241,7 @@ namespace AWS.Deploy.CLI.ServerMode.Controllers
                 try
                 {
                     var setting = state.SelectedRecommendation.GetOptionSetting(updatedSetting.Key);
-                    setting.SetValueOverride(updatedSetting.Value);
+                    setting.SetValueOverride(updatedSetting.Value, state.SelectedRecommendation);
                 }
                 catch (Exception ex)
                 {

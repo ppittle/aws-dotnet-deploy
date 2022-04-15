@@ -19,6 +19,11 @@ namespace AWS.Deploy.Common
         public string DockerBuildArgs { get; set; } = "";
 
         /// <summary>
+        /// The path to the Dockerfile. This can either be an absolute path or relative to the project directory.
+        /// </summary>
+        public string DockerfilePath { get; set; } = "";
+
+        /// <summary>
         /// The ECR Repository Name where the docker image will be pushed to.
         /// </summary>
         public string ECRRepositoryName { get; set; } = "";

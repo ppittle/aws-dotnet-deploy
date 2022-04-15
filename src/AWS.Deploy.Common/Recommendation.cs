@@ -12,6 +12,9 @@ namespace AWS.Deploy.Common
 {
     public class Recommendation : IUserInputOption
     {
+        /// <summary>
+        /// Returns the full path to the project file
+        /// </summary>
         public string ProjectPath => ProjectDefinition.ProjectPath;
 
         public ProjectDefinition ProjectDefinition { get; }
@@ -94,7 +97,7 @@ namespace AWS.Deploy.Common
             {
                 if (previousSettings.TryGetValue(optionSetting.Id, out var value))
                 {
-                    optionSetting.SetValueOverride(value);
+                    optionSetting.SetValueOverride(value, recommendation);
                 }
             }
         }
@@ -261,6 +264,20 @@ namespace AWS.Deploy.Common
                 return false;
 
             return true;
+        }
+
+        /// <summary>
+        /// Helper to get the project's directory
+        /// </summary>
+        /// <returns>Full name of directory containing this recommendation's project file</returns>
+        public string GetProjectDirectory()
+        {
+            var projectDirectory = new FileInfo(ProjectPath).Directory?.FullName;
+
+            if (string.IsNullOrEmpty(projectDirectory))
+                throw new InvalidProjectPathException(DeployToolErrorCode.ProjectPathNotFound, "The project path provided is invalid.");
+
+            return projectDirectory;
         }
     }
 }

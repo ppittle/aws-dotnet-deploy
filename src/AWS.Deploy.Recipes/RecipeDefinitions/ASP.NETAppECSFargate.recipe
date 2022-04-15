@@ -68,11 +68,13 @@
         },
         {
             "ValidatorType": "MinMaxConstraint",
-            "Configuration":
-            {
+            "Configuration": {
                 "MinValueOptionSettingsId": "AutoScaling.MinCapacity",
                 "MaxValueOptionSettingsId": "AutoScaling.MaxCapacity"
             }
+        },
+        {
+            "ValidatorType": "ValidDockerfilePath"
         }
     ],
 

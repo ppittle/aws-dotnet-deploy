@@ -57,7 +57,7 @@ namespace AWS.Deploy.CLI.Common.UnitTests.Recipes.Validation
             // ACT
             try
             {
-                optionSettingItem.SetValueOverride(invalidValue);
+                optionSettingItem.SetValueOverride(invalidValue, null);
             }
             catch (ValidationFailedException e)
             {
@@ -93,7 +93,7 @@ namespace AWS.Deploy.CLI.Common.UnitTests.Recipes.Validation
             // ACT
             try
             {
-                optionSettingItem.SetValueOverride(invalidValue);
+                optionSettingItem.SetValueOverride(invalidValue, null);
             }
             catch (ValidationFailedException e)
             {
@@ -135,7 +135,7 @@ namespace AWS.Deploy.CLI.Common.UnitTests.Recipes.Validation
             // ACT
             try
             {
-                optionSettingItem.SetValueOverride(validValue);
+                optionSettingItem.SetValueOverride(validValue, null);
             }
             catch (ValidationFailedException e)
             {
@@ -179,7 +179,7 @@ namespace AWS.Deploy.CLI.Common.UnitTests.Recipes.Validation
             // ACT
             try
             {
-                optionSettingItem.SetValueOverride(invalidValue);
+                optionSettingItem.SetValueOverride(invalidValue, null);
             }
             catch (ValidationFailedException e)
             {

@@ -90,17 +90,19 @@ namespace AWS.Deploy.Common.Recipes
         /// <summary>
         /// Assigns a value to the OptionSettingItem.
         /// </summary>
+        /// <param name="valueOverride">Value to assign</param>
+        /// <param name="recommendation">Current deployment recommendation, may be used if the validator needs to consider properties other than itself</param>
         /// <exception cref="ValidationFailedException">
         /// Thrown if one or more <see cref="Validators"/> determine
         /// <paramref name="valueOverride"/> is not valid.
         /// </exception>
-        public void SetValueOverride(object valueOverride)
+        public void SetValueOverride(object valueOverride, Recommendation recommendation)
         {
             var isValid = true;
             var validationFailedMessage = string.Empty;
             foreach (var validator in this.BuildValidators())
             {
-                var result = validator.Validate(valueOverride);
+                var result = validator.Validate(valueOverride, recommendation);
                 if (!result.IsValid)
                 {
                     isValid = false;
@@ -150,7 +152,7 @@ namespace AWS.Deploy.Common.Recipes
                 {
                     if (deserialized.TryGetValue(childOptionSetting.Id, out var childValueOverride))
                     {
-                        childOptionSetting.SetValueOverride(childValueOverride);
+                        childOptionSetting.SetValueOverride(childValueOverride, recommendation);
                     }
                 }
             }

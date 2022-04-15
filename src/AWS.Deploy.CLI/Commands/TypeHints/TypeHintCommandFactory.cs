@@ -33,7 +33,7 @@ namespace AWS.Deploy.CLI.Commands.TypeHints
     {
         private readonly Dictionary<OptionSettingTypeHint, ITypeHintCommand> _commands;
 
-        public TypeHintCommandFactory(IToolInteractiveService toolInteractiveService, IAWSResourceQueryer awsResourceQueryer, IConsoleUtilities consoleUtilities, IDirectoryManager directoryManager)
+        public TypeHintCommandFactory(IToolInteractiveService toolInteractiveService, IAWSResourceQueryer awsResourceQueryer, IConsoleUtilities consoleUtilities, IDirectoryManager directoryManager, IFileManager fileManager)
         {
             _commands = new Dictionary<OptionSettingTypeHint, ITypeHintCommand>
             {
@@ -63,7 +63,8 @@ namespace AWS.Deploy.CLI.Commands.TypeHints
                 { OptionSettingTypeHint.ExistingVpcConnector,  new ExistingVpcConnectorCommand(awsResourceQueryer, consoleUtilities) },
                 { OptionSettingTypeHint.ExistingSubnets,  new ExistingSubnetsCommand(awsResourceQueryer, consoleUtilities) },
                 { OptionSettingTypeHint.ExistingSecurityGroups,  new ExistingSecurityGroupsCommand(awsResourceQueryer, consoleUtilities) },
-                { OptionSettingTypeHint.VPCConnector,  new VPCConnectorCommand(awsResourceQueryer, consoleUtilities, toolInteractiveService) }
+                { OptionSettingTypeHint.VPCConnector,  new VPCConnectorCommand(awsResourceQueryer, consoleUtilities, toolInteractiveService) },
+                { OptionSettingTypeHint.FilePath, new FilePathCommand(consoleUtilities) }
             };
         }
 

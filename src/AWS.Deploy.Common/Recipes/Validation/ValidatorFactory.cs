@@ -17,13 +17,15 @@ namespace AWS.Deploy.Common.Recipes.Validation
         {
             { OptionSettingItemValidatorList.Range, typeof(RangeValidator) },
             { OptionSettingItemValidatorList.Regex, typeof(RegexValidator) },
-            { OptionSettingItemValidatorList.Required, typeof(RequiredValidator) }
+            { OptionSettingItemValidatorList.Required, typeof(RequiredValidator) },
+            { OptionSettingItemValidatorList.File, typeof(FileValidator) }
         };
 
         private static readonly Dictionary<RecipeValidatorList, Type> _recipeValidatorTypeMapping = new()
         {
             { RecipeValidatorList.FargateTaskSizeCpuMemoryLimits, typeof(FargateTaskCpuMemorySizeValidator) },
-            { RecipeValidatorList.MinMaxConstraint, typeof(MinMaxConstraintValidator) }
+            { RecipeValidatorList.MinMaxConstraint, typeof(MinMaxConstraintValidator) },
+            { RecipeValidatorList.ValidDockerfilePath, typeof(DockerfilePathValidator) }
         };
 
         public static IOptionSettingItemValidator[] BuildValidators(this OptionSettingItem optionSettingItem)
@@ -37,7 +39,7 @@ namespace AWS.Deploy.Common.Recipes.Validation
         public static IRecipeValidator[] BuildValidators(this RecipeDefinition recipeDefinition)
         {
             return recipeDefinition.Validators
-                .Select(v => Activate(v.ValidatorType, v.Configuration,_recipeValidatorTypeMapping))
+                .Select(v => Activate(v.ValidatorType, v.Configuration, _recipeValidatorTypeMapping))
                 .OfType<IRecipeValidator>()
                 .ToArray();
         }

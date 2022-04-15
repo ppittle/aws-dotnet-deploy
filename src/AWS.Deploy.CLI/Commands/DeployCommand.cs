@@ -443,7 +443,7 @@ namespace AWS.Deploy.CLI.Commands
                         throw new InvalidOverrideValueException(DeployToolErrorCode.InvalidValueForOptionSettingItem, $"Invalid value {optionSettingValue} for option setting item {optionSettingJsonPath}");
                     }
 
-                    optionSetting.SetValueOverride(settingValue);
+                    optionSetting.SetValueOverride(settingValue, recommendation);
 
                     SetDeploymentBundleOptionSetting(recommendation, optionSetting.Id, settingValue);
                 }
@@ -477,6 +477,9 @@ namespace AWS.Deploy.CLI.Commands
             {
                 case "DockerExecutionDirectory":
                     new DockerExecutionDirectoryCommand(_consoleUtilities, _directoryManager).OverrideValue(recommendation, settingValue.ToString() ?? "");
+                    break;
+                case "DockerfilePath":
+                    recommendation.DeploymentBundle.DockerfilePath = new FilePathCommand(_consoleUtilities).OverrideValue(recommendation, settingValue.ToString() ?? "");
                     break;
                 case "DockerBuildArgs":
                     new DockerBuildArgsCommand(_consoleUtilities).OverrideValue(recommendation, settingValue.ToString() ?? "");
@@ -886,7 +889,7 @@ namespace AWS.Deploy.CLI.Commands
             {
                 try
                 {
-                    setting.SetValueOverride(settingValue);
+                    setting.SetValueOverride(settingValue, recommendation);
                 }
                 catch (ValidationFailedException ex)
                 {

@@ -179,11 +179,11 @@ namespace AWS.Deploy.CLI.UnitTests
 
             var originalDefaultValue = fargateRecommendation.GetOptionSettingDefaultValue<int>(desiredCountOptionSetting);
 
-            desiredCountOptionSetting.SetValueOverride(2);
+            desiredCountOptionSetting.SetValueOverride(2, fargateRecommendation);
 
             Assert.Equal(2, fargateRecommendation.GetOptionSettingValue<int>(desiredCountOptionSetting));
 
-            desiredCountOptionSetting.SetValueOverride(consoleUtilities.AskUserForValue("Title", "2", true, originalDefaultValue.ToString()));
+            desiredCountOptionSetting.SetValueOverride(consoleUtilities.AskUserForValue("Title", "2", true, originalDefaultValue.ToString()), fargateRecommendation);
 
             Assert.Equal(originalDefaultValue, fargateRecommendation.GetOptionSettingValue<int>(desiredCountOptionSetting));
         }
@@ -208,11 +208,11 @@ namespace AWS.Deploy.CLI.UnitTests
 
             var originalDefaultValue = fargateRecommendation.GetOptionSettingDefaultValue<string>(ecsServiceNameOptionSetting);
 
-            ecsServiceNameOptionSetting.SetValueOverride("TestService");
+            ecsServiceNameOptionSetting.SetValueOverride("TestService", fargateRecommendation);
 
             Assert.Equal("TestService", fargateRecommendation.GetOptionSettingValue<string>(ecsServiceNameOptionSetting));
 
-            ecsServiceNameOptionSetting.SetValueOverride(consoleUtilities.AskUserForValue("Title", "TestService", true, originalDefaultValue));
+            ecsServiceNameOptionSetting.SetValueOverride(consoleUtilities.AskUserForValue("Title", "TestService", true, originalDefaultValue), fargateRecommendation);
 
             Assert.Equal(originalDefaultValue, fargateRecommendation.GetOptionSettingValue<string>(ecsServiceNameOptionSetting));
         }
@@ -256,7 +256,7 @@ namespace AWS.Deploy.CLI.UnitTests
             var beanstalkRecommendation = recommendations.First(r => r.Recipe.Id == Constants.ASPNET_CORE_BEANSTALK_RECIPE_ID);
             var environmentTypeOptionSetting = beanstalkRecommendation.Recipe.OptionSettings.First(optionSetting => optionSetting.Id.Equals("EnvironmentType"));
 
-            environmentTypeOptionSetting.SetValueOverride("LoadBalanced");
+            environmentTypeOptionSetting.SetValueOverride("LoadBalanced", beanstalkRecommendation);
             Assert.Equal("LoadBalanced", beanstalkRecommendation.GetOptionSettingValue(environmentTypeOptionSetting));
         }
 
@@ -270,8 +270,13 @@ namespace AWS.Deploy.CLI.UnitTests
             var beanstalkRecommendation = recommendations.First(r => r.Recipe.Id == Constants.ASPNET_CORE_BEANSTALK_RECIPE_ID);
             var applicationIAMRoleOptionSetting = beanstalkRecommendation.Recipe.OptionSettings.First(optionSetting => optionSetting.Id.Equals("ApplicationIAMRole"));
 
-            applicationIAMRoleOptionSetting.SetValueOverride(new IAMRoleTypeHintResponse {CreateNew = false,
-                RoleArn = "arn:aws:iam::123456789012:group/Developers" });
+            applicationIAMRoleOptionSetting.SetValueOverride(
+                new IAMRoleTypeHintResponse
+                {
+                    CreateNew = false,
+                    RoleArn = "arn:aws:iam::123456789012:group/Developers"
+                },
+                beanstalkRecommendation);
 
             var iamRoleTypeHintResponse = beanstalkRecommendation.GetOptionSettingValue<IAMRoleTypeHintResponse>(applicationIAMRoleOptionSetting);
 
@@ -385,7 +390,7 @@ namespace AWS.Deploy.CLI.UnitTests
             Assert.False(beanstalkRecommendation.IsOptionSettingDisplayable(loadBalancerTypeOptionSetting));
 
             // Satisfy dependency
-            environmentTypeOptionSetting.SetValueOverride("LoadBalanced");
+            environmentTypeOptionSetting.SetValueOverride("LoadBalanced", beanstalkRecommendation);
             Assert.Equal("LoadBalanced", beanstalkRecommendation.GetOptionSettingValue(environmentTypeOptionSetting));
 
             // Verify
@@ -408,11 +413,11 @@ namespace AWS.Deploy.CLI.UnitTests
             Assert.False(fargateRecommendation.IsOptionSettingDisplayable(vpcIdOptionSetting));
 
             // Satisfy dependencies
-            isDefaultOptionSetting.SetValueOverride(false);
+            isDefaultOptionSetting.SetValueOverride(false, fargateRecommendation);
             Assert.False(fargateRecommendation.GetOptionSettingValue<bool>(isDefaultOptionSetting));
 
             // Default value for Vpc.CreateNew already false, this is to show explicitly setting an override that satisfies Vpc Id option setting
-            createNewOptionSetting.SetValueOverride(false);
+            createNewOptionSetting.SetValueOverride(false, fargateRecommendation);
             Assert.False(fargateRecommendation.GetOptionSettingValue<bool>(createNewOptionSetting));
 
             // Verify
@@ -435,7 +440,7 @@ namespace AWS.Deploy.CLI.UnitTests
             Assert.False(beanstalkRecommendation.IsOptionSettingDisplayable(subnetsSetting));
 
             // Satisfy dependencies
-            vpcIdOptionSetting.SetValueOverride("vpc-1234abcd");
+            vpcIdOptionSetting.SetValueOverride("vpc-1234abcd", beanstalkRecommendation);
             Assert.True(beanstalkRecommendation.IsOptionSettingDisplayable(subnetsSetting));
         }
 
@@ -457,11 +462,11 @@ namespace AWS.Deploy.CLI.UnitTests
             Assert.False(beanstalkRecommendation.IsOptionSettingDisplayable(securityGroupsSetting));
 
             // Satisfy 1 dependency
-            vpcIdOptionSetting.SetValueOverride("vpc-1234abcd");
+            vpcIdOptionSetting.SetValueOverride("vpc-1234abcd", beanstalkRecommendation);
             Assert.False(beanstalkRecommendation.IsOptionSettingDisplayable(securityGroupsSetting));
 
             // Satisfy 2 dependencies
-            subnetsSetting.SetValueOverride(new SortedSet<string> { "subnet-1234abcd" });
+            subnetsSetting.SetValueOverride(new SortedSet<string> { "subnet-1234abcd" }, beanstalkRecommendation);
             Assert.True(beanstalkRecommendation.IsOptionSettingDisplayable(securityGroupsSetting));
         }
 

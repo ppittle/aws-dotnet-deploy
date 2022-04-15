@@ -11,7 +11,7 @@ namespace AWS.Deploy.Common.Recipes.Validation
         private static readonly string defaultValidationFailedMessage = "Value can not be empty";
         public string ValidationFailedMessage { get; set; } = defaultValidationFailedMessage;
 
-        public ValidationResult Validate(object input) =>
+        public ValidationResult Validate(object input, Recommendation recommendation) =>
             new()
             {
                 IsValid = !string.IsNullOrEmpty(input?.ToString()),

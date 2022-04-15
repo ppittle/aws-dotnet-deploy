@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using AWS.Deploy.Common;
 using AWS.Deploy.Common.IO;
+using AWS.Deploy.Common.Utilities;
 using Newtonsoft.Json;
 
 namespace AWS.Deploy.DockerEngine
@@ -158,8 +159,8 @@ namespace AWS.Deploy.DockerEngine
             if (string.IsNullOrEmpty(recommendation.DeploymentBundle.DockerExecutionDirectory))
             {
                 var projectFilename = Path.GetFileName(recommendation.ProjectPath);
-                var dockerFilePath = Path.Combine(Path.GetDirectoryName(recommendation.ProjectPath) ?? "", "Dockerfile");
-                if (_fileManager.Exists(dockerFilePath))
+                
+                if (DockerUtilities.TryGetDockerfile(recommendation, _fileManager, out var dockerFilePath))
                 {
                     using (var stream = File.OpenRead(dockerFilePath))
                     using (var reader = new StreamReader(stream))

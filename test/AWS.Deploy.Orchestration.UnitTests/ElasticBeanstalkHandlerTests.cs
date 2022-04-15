@@ -77,10 +77,10 @@ namespace AWS.Deploy.Orchestration.UnitTests
                 new Mock<IOrchestratorInteractiveService>().Object,
                 new Mock<IFileManager>().Object);
 
-            recommendation.GetOptionSetting(Constants.ElasticBeanstalk.EnhancedHealthReportingOptionId).SetValueOverride("basic");
-            recommendation.GetOptionSetting(Constants.ElasticBeanstalk.HealthCheckURLOptionId).SetValueOverride("/url");
-            recommendation.GetOptionSetting(Constants.ElasticBeanstalk.ProxyOptionId).SetValueOverride("none");
-            recommendation.GetOptionSetting(Constants.ElasticBeanstalk.XRayTracingOptionId).SetValueOverride("true");
+            recommendation.GetOptionSetting(Constants.ElasticBeanstalk.EnhancedHealthReportingOptionId).SetValueOverride("basic", recommendation);
+            recommendation.GetOptionSetting(Constants.ElasticBeanstalk.HealthCheckURLOptionId).SetValueOverride("/url", recommendation);
+            recommendation.GetOptionSetting(Constants.ElasticBeanstalk.ProxyOptionId).SetValueOverride("none", recommendation);
+            recommendation.GetOptionSetting(Constants.ElasticBeanstalk.XRayTracingOptionId).SetValueOverride("true", recommendation);
 
             // ACT
             var optionSettings = elasticBeanstalkHandler.GetEnvironmentConfigurationSettings(recommendation);

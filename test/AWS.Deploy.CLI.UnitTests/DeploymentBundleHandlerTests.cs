@@ -38,7 +38,7 @@ namespace AWS.Deploy.CLI.UnitTests
             _directoryManager = new TestDirectoryManager();
             _projectDefinitionParser = new ProjectDefinitionParser(new FileManager(), new DirectoryManager());
 
-            _deploymentBundleHandler = new DeploymentBundleHandler(_commandLineWrapper, awsResourceQueryer, interactiveService, _directoryManager, zipFileManager);
+            _deploymentBundleHandler = new DeploymentBundleHandler(_commandLineWrapper, awsResourceQueryer, interactiveService, _directoryManager, zipFileManager, new FileManager());
 
             _recipeDefinition = new Mock<RecipeDefinition>(
                 It.IsAny<string>(),
@@ -58,17 +58,20 @@ namespace AWS.Deploy.CLI.UnitTests
         {
             var projectPath = SystemIOUtilities.ResolvePath("ConsoleAppTask");
             var project = await _projectDefinitionParser.Parse(projectPath);
-
-            var recommendation = new Recommendation(_recipeDefinition, project, new List<OptionSettingItem>(), 100, new Dictionary<string, string>());
+            var options = new List<OptionSettingItem>()
+            {
+                new OptionSettingItem("DockerfilePath", "", "")
+            };
+            var recommendation = new Recommendation(_recipeDefinition, project, options, 100, new Dictionary<string, string>());
 
             var cloudApplication = new CloudApplication("ConsoleAppTask", String.Empty, CloudApplicationResourceType.CloudFormationStack, string.Empty);
             var imageTag = "imageTag";
             await _deploymentBundleHandler.BuildDockerImage(cloudApplication, recommendation, imageTag);
 
-            var dockerFile = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(recommendation.ProjectPath)), "Dockerfile");
+            var expectedDockerFile = Path.Combine(".", "Dockerfile");
             var dockerExecutionDirectory = Directory.GetParent(Path.GetFullPath(recommendation.ProjectPath)).Parent.Parent;
 
-            Assert.Equal($"docker build -t {imageTag} -f \"{dockerFile}\" .",
+            Assert.Equal($"docker build -t {imageTag} -f \"{expectedDockerFile}\" .",
                 _commandLineWrapper.CommandsToExecute.First().Command);
             Assert.Equal(dockerExecutionDirectory.FullName,
                 _commandLineWrapper.CommandsToExecute.First().WorkingDirectory);
@@ -79,7 +82,11 @@ namespace AWS.Deploy.CLI.UnitTests
         {
             var projectPath = SystemIOUtilities.ResolvePath("ConsoleAppTask");
             var project = await _projectDefinitionParser.Parse(projectPath);
-            var recommendation = new Recommendation(_recipeDefinition, project, new List<OptionSettingItem>(), 100, new Dictionary<string, string>());
+            var options = new List<OptionSettingItem>()
+            {
+                new OptionSettingItem("DockerfilePath", "", "")
+            };
+            var recommendation = new Recommendation(_recipeDefinition, project, options, 100, new Dictionary<string, string>());
 
             recommendation.DeploymentBundle.DockerExecutionDirectory = projectPath;
 
@@ -87,11 +94,40 @@ namespace AWS.Deploy.CLI.UnitTests
             var imageTag = "imageTag";
             await _deploymentBundleHandler.BuildDockerImage(cloudApplication, recommendation, imageTag);
 
-            var dockerFile = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(recommendation.ProjectPath)), "Dockerfile");
+            var expectedDockerFile = Path.Combine(".", "Dockerfile");
 
-            Assert.Equal($"docker build -t {imageTag} -f \"{dockerFile}\" .",
+            Assert.Equal($"docker build -t {imageTag} -f \"{expectedDockerFile}\" .",
                 _commandLineWrapper.CommandsToExecute.First().Command);
             Assert.Equal(projectPath,
+                _commandLineWrapper.CommandsToExecute.First().WorkingDirectory);
+        }
+
+        /// <summary>
+        /// Tests the Dockerfile being located in a subfolder instead of the project root
+        /// </summary>
+        [Fact]
+        public async Task BuildDockerImage_AlternativeDockerfilePathSet()
+        {
+            var projectPath = SystemIOUtilities.ResolvePath("ConsoleAppTask");
+            var project = await _projectDefinitionParser.Parse(projectPath);
+            var options = new List<OptionSettingItem>()
+            {
+                new OptionSettingItem("DockerfilePath", "", "")
+            };
+            var recommendation = new Recommendation(_recipeDefinition, project, options, 100, new Dictionary<string, string>());
+
+            var dockerfilePath = Path.Combine(projectPath, "Docker", "Dockerfile");
+            var expectedDockerExecutionDirectory = Directory.GetParent(Path.GetFullPath(recommendation.ProjectPath)).Parent.Parent;
+
+            options[0].SetValueOverride(dockerfilePath, recommendation);
+
+            var cloudApplication = new CloudApplication("ConsoleAppTask", string.Empty, CloudApplicationResourceType.CloudFormationStack, recommendation.Recipe.Id);
+            var imageTag = "imageTag";
+            await _deploymentBundleHandler.BuildDockerImage(cloudApplication, recommendation, imageTag);
+
+            Assert.Equal($"docker build -t {imageTag} -f \"{dockerfilePath}\" .",
+                _commandLineWrapper.CommandsToExecute.First().Command);
+            Assert.Equal(expectedDockerExecutionDirectory.FullName,
                 _commandLineWrapper.CommandsToExecute.First().WorkingDirectory);
         }
 

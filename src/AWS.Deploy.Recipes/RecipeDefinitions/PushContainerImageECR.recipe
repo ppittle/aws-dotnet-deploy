@@ -26,7 +26,11 @@
             }
         }
     ],
-
+    "Validators": [
+        {
+            "ValidatorType": "ValidDockerfilePath"
+        }
+    ],
     "OptionSettings": [
         {
             "Id": "ImageTag",

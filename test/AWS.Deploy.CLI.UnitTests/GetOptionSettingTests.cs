@@ -77,7 +77,7 @@ namespace AWS.Deploy.CLI.UnitTests
             var beanstalkRecommendation = recommendations.First(r => r.Recipe.Id == Constants.ASPNET_CORE_BEANSTALK_RECIPE_ID);
 
             var managedActionsEnabled = beanstalkRecommendation.GetOptionSetting($"{optionSetting}.{childSetting}");
-            managedActionsEnabled.SetValueOverride(childValue);
+            managedActionsEnabled.SetValueOverride(childValue, beanstalkRecommendation);
 
             var elasticBeanstalkManagedPlatformUpdates = beanstalkRecommendation.GetOptionSetting(optionSetting);
             var elasticBeanstalkManagedPlatformUpdatesValue = beanstalkRecommendation.GetOptionSettingValue<Dictionary<string, object>>(elasticBeanstalkManagedPlatformUpdates);
@@ -97,8 +97,8 @@ namespace AWS.Deploy.CLI.UnitTests
             var subnets = appRunnerRecommendation.GetOptionSetting("VPCConnector.Subnets");
             var securityGroups = appRunnerRecommendation.GetOptionSetting("VPCConnector.SecurityGroups");
 
-            Assert.Throws<ValidationFailedException>(() => subnets.SetValueOverride(new SortedSet<string>(){ "subnet1" }));
-            Assert.Throws<ValidationFailedException>(() => securityGroups.SetValueOverride(new SortedSet<string>(){ "securityGroup1" }));
+            Assert.Throws<ValidationFailedException>(() => subnets.SetValueOverride(new SortedSet<string>(){ "subnet1" }, appRunnerRecommendation));
+            Assert.Throws<ValidationFailedException>(() => securityGroups.SetValueOverride(new SortedSet<string>(){ "securityGroup1" }, appRunnerRecommendation));
         }
 
         [Fact]
@@ -113,7 +113,7 @@ namespace AWS.Deploy.CLI.UnitTests
             var subnets = appRunnerRecommendation.GetOptionSetting("VPCConnector.Subnets");
             var emptySubnetsValue = appRunnerRecommendation.GetOptionSettingValue(subnets);
 
-            subnets.SetValueOverride(new SortedSet<string>(){ "subnet-1234abcd" });
+            subnets.SetValueOverride(new SortedSet<string>(){ "subnet-1234abcd" }, appRunnerRecommendation);
             var subnetsValue = appRunnerRecommendation.GetOptionSettingValue(subnets);
 
             var emptySubnetsString = Assert.IsType<string>(emptySubnetsValue);

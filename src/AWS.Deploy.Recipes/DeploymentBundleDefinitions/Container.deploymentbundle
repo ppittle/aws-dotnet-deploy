@@ -12,6 +12,26 @@
             "Updatable": true
         },
         {
+            "Id": "DockerfilePath",
+            "Name": "Dockerfile Path",
+            "Description": "Specifies the absolute path to the Dockerfile as an alternative to the default location.",
+            "Type": "String",
+            "TypeHint": "FilePath",
+            "TypeHintData": {
+                "Filter": "All files (*.*)|*.*",
+                "CheckFileExists": true,
+                "Title": "Select a Dockerfile"
+            },
+            "DefaultValue": "{DockerfilePath}",
+            "AdvancedSetting": true,
+            "Updatable": true,
+            "Validators": [
+                {
+                    "ValidatorType": "File"
+                }
+            ]
+        },
+        {
             "Id": "DockerExecutionDirectory",
             "Name": "Docker Execution Directory",
             "Description": "Specifies the docker execution directory where the docker build command will be executed from.",

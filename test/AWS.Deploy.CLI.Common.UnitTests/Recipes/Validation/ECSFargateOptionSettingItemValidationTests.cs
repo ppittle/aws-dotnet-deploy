@@ -169,7 +169,7 @@ namespace AWS.Deploy.CLI.Common.UnitTests.Recipes.Validation
             ValidationFailedException exception = null;
             try
             {
-                optionSettingItem.SetValueOverride(value);
+                optionSettingItem.SetValueOverride(value, null);
             }
             catch (ValidationFailedException e)
             {
