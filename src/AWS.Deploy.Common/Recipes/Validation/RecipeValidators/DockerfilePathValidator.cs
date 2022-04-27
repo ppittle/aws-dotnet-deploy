@@ -1,6 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+using System.IO;
 using AWS.Deploy.Common.IO;
 
 namespace AWS.Deploy.Common.Recipes.Validation
@@ -31,7 +32,17 @@ namespace AWS.Deploy.Common.Recipes.Validation
                 return ValidationResult.Valid();
             }
 
-            if (!directoryManager.ExistsInsideDirectory(dockerExecutionDirectory, dockerfilePath))
+            // Convert both to absolute paths in case they were specified relative to the project directory
+            var projectPath = recommendation.GetProjectDirectory();
+
+            var absoluteDockerfilePath = Path.IsPathRooted(dockerfilePath)
+                ? dockerfilePath
+                : directoryManager.GetAbsolutePath(projectPath, dockerfilePath);
+            var absoluteDockerExecutionDirectory = Path.IsPathRooted(dockerExecutionDirectory)
+                ? dockerExecutionDirectory
+                : directoryManager.GetAbsolutePath(projectPath, dockerExecutionDirectory);
+
+            if (!directoryManager.ExistsInsideDirectory(absoluteDockerExecutionDirectory, absoluteDockerfilePath))
             {
                 return ValidationResult.Failed($"The specified Dockerfile \"{dockerfilePath}\" is not located within the specified Docker execution directory \"{dockerExecutionDirectory}\"");
             }

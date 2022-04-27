@@ -34,74 +34,47 @@ namespace AWS.Deploy.CLI.Common.UnitTests.Recipes.Validation
                 It.IsAny<string>()).Object;
         }
 
-        /// <summary>
-        /// We generate a Dockerfile later if one isn't specified, so not invalid at this point
-        /// </summary>
-        [Fact]
-        public void MissingDockerFileValid()
+        public static IEnumerable<object[]> DockerfilePathTestData => new List<object[]>()
         {
-            var dockerfilePath = "";
-            var dockerExecutionDirectory = Path.Combine("C", "project");
+            // Dockerfile path | Docker execution directory | expected to be valid?
 
-            DockerfilePathValidationHelper(dockerfilePath, dockerExecutionDirectory, true);
-        }
+            // We generate a Dockerfile later if one isn't specified, so not invalid at this point
+            new object[] { "", Path.Combine("C:", "project"), true },
 
-        /// <summary>
-        /// We compute the execution directory later if one isn't specified, so not invalid at this point
-        /// </summary>
-        [Fact]
-        public void MissingDockerExecutionDirectoryValid()
-        {
-            var dockerfilePath = Path.Combine("C", "project", "Dockerfile");
-            var dockerExecutionDirectory = "";
+            // We compute the execution directory later if one isn't specified, so not invalid at this point
+            new object[] { Path.Combine("C:", "project", "Dockerfile"), "", true },
 
-            DockerfilePathValidationHelper(dockerfilePath, dockerExecutionDirectory, true);
-        }
+            // Dockerfile is in the execution directory, with absolute paths
+            new object[] { Path.Combine("C:", "project", "Dockerfile"), Path.Combine("C:", "project"), true },
 
-        /// <summary>
-        /// Dockerfile is in the execution directory
-        /// </summary>
-        [Fact]
-        public void DockerfileInExecutionDirectoryValid()
-        {
-            var dockerfilePath = Path.Combine("C", "project", "Dockerfile");
-            var dockerExecutionDirectory = Path.Combine("C", "project");
+            // Dockerfile is in the execution directory, with relative paths
+            new object[] { Path.Combine(".", "Dockerfile"), Path.Combine("."), true },
 
-            DockerfilePathValidationHelper(dockerfilePath, dockerExecutionDirectory, true);
-        }
+            // Dockerfile is further down in execution directory, with absolute paths
+            new object[] { Path.Combine("C:", "project", "child", "Dockerfile"), Path.Combine("C:", "project"), true },
+
+            // Dockerfile is further down in execution directory, with relative paths
+            new object[] { Path.Combine(".", "child", "Dockerfile"), Path.Combine("."), true },
+
+            // Dockerfile is outside of the execution directory, which is invalid
+            new object[] { Path.Combine("C:", "project", "Dockerfile"), Path.Combine("C:", "foo"), false }
+        };
 
         /// <summary>
-        /// Dockerfile is further down in execution directory
+        /// Tests for <see cref="DockerfilePathValidator"/>, which validates the relationship
+        /// between a Dockerfile path and the Docker execution directory
         /// </summary>
-        [Fact]
-        public void DockerfileNestedInExecutionDirectoryValid()
-        {
-            var dockerfilePath = Path.Combine("C", "project", "child", "Dockerfile");
-            var dockerExecutionDirectory = Path.Combine("C", "project");
-
-            DockerfilePathValidationHelper(dockerfilePath, dockerExecutionDirectory, true);
-        }
-
-        /// <summary>
-        /// Dockerfile is outside of the execution directory, which is invalid
-        /// </summary>
-        [Fact]
-        public void DockerfileNestedInExecutionDirectoryInvalid()
-        {
-            var dockerfilePath = Path.Combine("C", "project", "Dockerfile");
-            var dockerExecutionDirectory = Path.Combine("C", "foo");
-
-            DockerfilePathValidationHelper(dockerfilePath, dockerExecutionDirectory, false);
-        }
-
-        private void DockerfilePathValidationHelper(string dockerfilePath, string dockerExecutionDirectory, bool expectedToBeValid)
+        [Theory]
+        [MemberData(nameof(DockerfilePathTestData))]
+        public void DockerfilePathValidationHelper(string dockerfilePath, string dockerExecutionDirectory, bool expectedToBeValid)
         {
             var validator = new DockerfilePathValidator();
             var options = new List<OptionSettingItem>()
             {
                 new OptionSettingItem("DockerfilePath", "", "")
             };
-            var recommendation = new Recommendation(_recipeDefinition, null, options, 100, new Dictionary<string, string>());
+            var projectDefintion = new ProjectDefinition(null, Path.Combine("C:", "project", "test.csproj"), "", "");
+            var recommendation = new Recommendation(_recipeDefinition, projectDefintion, options, 100, new Dictionary<string, string>());
 
             recommendation.DeploymentBundle.DockerExecutionDirectory = dockerExecutionDirectory;
             recommendation.GetOptionSetting("DockerfilePath").SetValueOverride(dockerfilePath, recommendation);
