@@ -16,6 +16,10 @@ namespace AWS.Deploy.Common.Recipes.Validation
         /// <summary>
         /// Must be paired with <see cref="RequiredValidator"/>
         /// </summary>
-        Required
+        Required,
+        /// <summary>
+        /// Must be paired with <see cref="ExistingResourceValidator"/>
+        /// </summary>
+        ExistingResource
     }
 }

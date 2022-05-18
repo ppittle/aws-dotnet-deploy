@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Amazon.Runtime.Internal;
 using AWS.Deploy.CLI.Common.UnitTests.IO;
+using AWS.Deploy.Common.Data;
 using AWS.Deploy.Common.IO;
 using AWS.Deploy.Common.Recipes;
 using AWS.Deploy.Common.Recipes.Validation;
@@ -27,15 +28,23 @@ namespace AWS.Deploy.CLI.Common.UnitTests.Recipes.Validation
         private readonly IOptionSettingHandler _optionSettingHandler;
         private readonly IServiceProvider _serviceProvider;
         private readonly IValidatorFactory _validatorFactory;
+        private readonly Mock<IAWSResourceQueryer> _awsResourceQueryer;
 
         public ValidatorFactoryTests()
         {
+            _awsResourceQueryer = new Mock<IAWSResourceQueryer>();
             _optionSettingHandler = new Mock<IOptionSettingHandler>().Object;
 
             var mockServiceProvider = new Mock<IServiceProvider>();
             mockServiceProvider.Setup(x => x.GetService(typeof(IOptionSettingHandler))).Returns(_optionSettingHandler);
             _serviceProvider = mockServiceProvider.Object;
+            mockServiceProvider
+                .Setup(x => x.GetService(typeof(IAWSResourceQueryer)))
+                .Returns(_awsResourceQueryer.Object);
             _validatorFactory = new ValidatorFactory(_serviceProvider);
+            mockServiceProvider
+                .Setup(x => x.GetService(typeof(IValidatorFactory)))
+                .Returns(_validatorFactory);
         }
 
         [Fact]

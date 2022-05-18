@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using AWS.Deploy.Common.Recipes.Validation;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -40,8 +41,8 @@ namespace AWS.Deploy.Common.Recipes
         /// </summary>
         /// <param name="optionSettingHandler">Handler use to set any child option settings</param>
         /// <param name="value">Value to set</param>
-        /// /// <param name="validators">Validators for this item</param>
-        void SetValue(IOptionSettingHandler optionSettingHandler, object value, IOptionSettingItemValidator[] validators);
+        /// <param name="validators">Validators for this item</param>
+        Task SetValue(IOptionSettingHandler optionSettingHandler, object value, IOptionSettingItemValidator[] validators, bool skipValidation);
     }
 
     /// <summary>
@@ -119,7 +120,7 @@ namespace AWS.Deploy.Common.Recipes
         /// The allowed values for the setting.
         /// </summary>
         public IList<string> AllowedValues { get; set; } = new List<string>();
-
+        
         /// <summary>
         /// The value mapping for allowed values. The key of the dictionary is what is sent to services
         /// and the value is the display value shown to users.

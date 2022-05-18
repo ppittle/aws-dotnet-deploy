@@ -21,7 +21,7 @@ namespace AWS.Deploy.Common.Recipes.Validation
         /// </summary>
         /// <param name="optionSettingItem">Option to validate</param>
         /// <returns>Array of validators for the given option</returns>
-        IOptionSettingItemValidator[] BuildValidators(OptionSettingItem optionSettingItem);
+        IOptionSettingItemValidator[] BuildValidators(OptionSettingItem optionSettingItem, Func<OptionSettingItemValidatorConfig, bool>? filter = null);
 
         /// <summary>
         /// Builds the validators that apply to the given recipe
@@ -47,18 +47,21 @@ namespace AWS.Deploy.Common.Recipes.Validation
         {
             { OptionSettingItemValidatorList.Range, typeof(RangeValidator) },
             { OptionSettingItemValidatorList.Regex, typeof(RegexValidator) },
-            { OptionSettingItemValidatorList.Required, typeof(RequiredValidator) }
+            { OptionSettingItemValidatorList.Required, typeof(RequiredValidator) },
+            { OptionSettingItemValidatorList.ExistingResource, typeof(ExistingResourceValidator) }
         };
 
         private static readonly Dictionary<RecipeValidatorList, Type> _recipeValidatorTypeMapping = new()
         {
             { RecipeValidatorList.FargateTaskSizeCpuMemoryLimits, typeof(FargateTaskCpuMemorySizeValidator) },
-            { RecipeValidatorList.MinMaxConstraint, typeof(MinMaxConstraintValidator) }
+            { RecipeValidatorList.MinMaxConstraint, typeof(MinMaxConstraintValidator) },
+            { RecipeValidatorList.ExistingResources, typeof(ExistingResourcesValidator) },
         };
 
-        public IOptionSettingItemValidator[] BuildValidators(OptionSettingItem optionSettingItem)
+        public IOptionSettingItemValidator[] BuildValidators(OptionSettingItem optionSettingItem, Func<OptionSettingItemValidatorConfig, bool>? filter = null)
         {
             return optionSettingItem.Validators
+                .Where(validator => filter != null ? filter(validator) : true)
                 .Select(v => Activate(v.ValidatorType, v.Configuration, _optionSettingItemValidatorTypeMapping))
                 .OfType<IOptionSettingItemValidator>()
                 .ToArray();

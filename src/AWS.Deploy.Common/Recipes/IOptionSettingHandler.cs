@@ -1,6 +1,8 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Threading.Tasks;
+
 namespace AWS.Deploy.Common.Recipes
 {
     /// <summary>
@@ -13,7 +15,7 @@ namespace AWS.Deploy.Common.Recipes
         /// Due to different validations that could be put in place, access to other services may be needed.
         /// This method is meant to control access to those services and determine the value to be set.
         /// </summary>
-        void SetOptionSettingValue(OptionSettingItem optionSettingItem, object value);
+        Task SetOptionSettingValue(OptionSettingItem optionSettingItem, object value, bool skipValidation = false);
 
         /// <summary>
         /// This method retrieves the <see cref="OptionSettingItem"/> related to a specific <see cref="Recommendation"/>.

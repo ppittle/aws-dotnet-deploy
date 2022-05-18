@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using AWS.Deploy.Common;
 using AWS.Deploy.Common.Extensions;
 using AWS.Deploy.Common.Recipes;
@@ -26,9 +27,13 @@ namespace AWS.Deploy.Orchestration
         /// Thrown if one or more <see cref="Validators"/> determine
         /// <paramref name="value"/> is not valid.
         /// </exception>
-        public void SetOptionSettingValue(OptionSettingItem optionSettingItem, object value)
+        public async Task SetOptionSettingValue(OptionSettingItem optionSettingItem, object value, bool skipValidation = false)
         {
-            optionSettingItem.SetValue(this, value, _validatorFactory.BuildValidators(optionSettingItem));
+            IOptionSettingItemValidator[] validators = new IOptionSettingItemValidator[0];
+            if (!skipValidation)
+                validators = _validatorFactory.BuildValidators(optionSettingItem);
+
+            await optionSettingItem.SetValue(this, value, validators, skipValidation);
         }
 
         /// <summary>
