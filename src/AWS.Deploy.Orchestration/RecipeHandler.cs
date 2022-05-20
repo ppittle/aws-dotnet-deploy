@@ -13,26 +13,35 @@ using Newtonsoft.Json;
 
 namespace AWS.Deploy.Orchestration
 {
-    public class RecipeHandler
+    public class RecipeHandler : IRecipeHandler
     {
-        public static async Task<List<RecipeDefinition>> GetRecipeDefinitions(ICustomRecipeLocator customRecipeLocator, ProjectDefinition? projectDefinition)
+        private readonly ICustomRecipeLocator _customRecipeLocator;
+
+        public RecipeHandler(ICustomRecipeLocator customRecipeLocator)
         {
-            IEnumerable<string> recipeDefinitionsPaths = new List<string> { RecipeLocator.FindRecipeDefinitionsPath() };
+            _customRecipeLocator = customRecipeLocator;
+        }
+
+        public async Task<List<RecipeDefinition>> GetRecipeDefinitions(ProjectDefinition? projectDefinition, List<string>? recipeDefinitionPaths = null)
+        {
+            recipeDefinitionPaths ??= new List<string>();
+            recipeDefinitionPaths.Add(RecipeLocator.FindRecipeDefinitionsPath());
             if(projectDefinition != null)
             {
                 var targetApplicationFullPath = new DirectoryInfo(projectDefinition.ProjectPath).FullName;
                 var solutionDirectoryPath = !string.IsNullOrEmpty(projectDefinition.ProjectSolutionPath) ?
                     new DirectoryInfo(projectDefinition.ProjectSolutionPath).Parent.FullName : string.Empty;
 
-                var customPaths = await customRecipeLocator.LocateCustomRecipePaths(targetApplicationFullPath, solutionDirectoryPath);
-                recipeDefinitionsPaths = recipeDefinitionsPaths.Union(customPaths);
+                var customPaths = await _customRecipeLocator.LocateCustomRecipePaths(targetApplicationFullPath, solutionDirectoryPath);
+                recipeDefinitionPaths = recipeDefinitionPaths.Union(customPaths).ToList();
             }
 
             var recipeDefinitions = new List<RecipeDefinition>();
+            var uniqueRecipeId = new HashSet<string>();
 
             try
             {
-                foreach(var recipeDefinitionsPath in recipeDefinitionsPaths)
+                foreach(var recipeDefinitionsPath in recipeDefinitionPaths)
                 {
                     foreach (var recipeDefinitionFile in Directory.GetFiles(recipeDefinitionsPath, "*.recipe", SearchOption.TopDirectoryOnly))
                     {
@@ -42,7 +51,12 @@ namespace AWS.Deploy.Orchestration
                             var definition = JsonConvert.DeserializeObject<RecipeDefinition>(content);
                             if (definition == null)
                                 throw new FailedToDeserializeException(DeployToolErrorCode.FailedToDeserializeRecipe, $"Failed to Deserialize Recipe Definition [{recipeDefinitionFile}]");
-                            recipeDefinitions.Add(definition);
+                            definition.RecipePath = recipeDefinitionFile;
+                            if (!uniqueRecipeId.Contains(definition.Id))
+                            {
+                                recipeDefinitions.Add(definition);
+                                uniqueRecipeId.Add(definition.Id);
+                            }
                         }
                         catch (Exception e)
                         {

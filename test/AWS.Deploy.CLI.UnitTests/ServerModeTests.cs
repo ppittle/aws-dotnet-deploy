@@ -20,6 +20,8 @@ using AWS.Deploy.CLI.UnitTests.Utilities;
 
 using System.Collections.Generic;
 using System.IO;
+using AWS.Deploy.Common.Recipes;
+using DeploymentTypes = AWS.Deploy.CLI.ServerMode.Models.DeploymentTypes;
 
 namespace AWS.Deploy.CLI.UnitTests
 {
@@ -58,9 +60,10 @@ namespace AWS.Deploy.CLI.UnitTests
             var consoleInteractiveServiceImpl = new ConsoleInteractiveServiceImpl();
             var consoleOrchestratorLogger = new ConsoleOrchestratorLogger(consoleInteractiveServiceImpl);
             var customRecipeLocator = new CustomRecipeLocator(deploymentManifestEngine, consoleOrchestratorLogger, directoryManager);
+            var recipeHandler = new RecipeHandler(customRecipeLocator);
             var projectDefinitionParser = new ProjectDefinitionParser(fileManager, directoryManager);
 
-            var recipeController = new RecipeController(customRecipeLocator, projectDefinitionParser);
+            var recipeController = new RecipeController(recipeHandler, projectDefinitionParser);
             var response = await recipeController.GetRecipe(recipeId);
 
             Assert.IsType<BadRequestObjectResult>(response);
@@ -76,9 +79,10 @@ namespace AWS.Deploy.CLI.UnitTests
             var consoleOrchestratorLogger = new ConsoleOrchestratorLogger(consoleInteractiveServiceImpl);
             var customRecipeLocator = new CustomRecipeLocator(deploymentManifestEngine, consoleOrchestratorLogger, directoryManager);
             var projectDefinitionParser = new ProjectDefinitionParser(fileManager, directoryManager);
+            var recipeHandler = new RecipeHandler(customRecipeLocator);
 
-            var recipeController = new RecipeController(customRecipeLocator, projectDefinitionParser);
-            var recipeDefinitions = await RecipeHandler.GetRecipeDefinitions(customRecipeLocator, null);
+            var recipeController = new RecipeController(recipeHandler, projectDefinitionParser);
+            var recipeDefinitions = await recipeHandler.GetRecipeDefinitions(null);
             var recipe = recipeDefinitions.First();
 
             var response = await recipeController.GetRecipe(recipe.Id);
@@ -96,6 +100,7 @@ namespace AWS.Deploy.CLI.UnitTests
             var projectDefinitionParser = new ProjectDefinitionParser(fileManager, directoryManager);
 
             var mockCustomRecipeLocator = new Mock<ICustomRecipeLocator>();
+            var recipeHandler = new RecipeHandler(mockCustomRecipeLocator.Object);
 
             var sourceProjectDirectory = SystemIOUtilities.ResolvePath("WebAppWithDockerFile");
 
@@ -111,12 +116,12 @@ namespace AWS.Deploy.CLI.UnitTests
 
             var projectDefinition = await projectDefinitionParser.Parse(sourceProjectDirectory);
 
-            var recipeDefinitions = await RecipeHandler.GetRecipeDefinitions(mockCustomRecipeLocator.Object, projectDefinition);
+            var recipeDefinitions = await recipeHandler.GetRecipeDefinitions(projectDefinition);
             var recipe = recipeDefinitions.First();
             Assert.NotEqual(0, customLocatorCalls);
 
             customLocatorCalls = 0;
-            var recipeController = new RecipeController(mockCustomRecipeLocator.Object, projectDefinitionParser);
+            var recipeController = new RecipeController(recipeHandler, projectDefinitionParser);
             var response = await recipeController.GetRecipe(recipe.Id, sourceProjectDirectory);
             Assert.NotEqual(0, customLocatorCalls);
 

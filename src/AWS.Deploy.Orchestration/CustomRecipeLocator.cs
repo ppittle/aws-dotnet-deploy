@@ -8,15 +8,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using AWS.Deploy.Common.DeploymentManifest;
 using AWS.Deploy.Common.IO;
-using AWS.Deploy.Orchestration.Utilities;
+using AWS.Deploy.Common.Recipes;
 
 namespace AWS.Deploy.Orchestration
 {
-    public interface ICustomRecipeLocator
-    {
-        Task<HashSet<string>> LocateCustomRecipePaths(string targetApplicationFullPath, string solutionDirectoryPath);
-    }
-
     /// <summary>
     /// This class supports the functionality to fetch custom recipe paths from a deployment-manifest file as well as
     /// other locations that are monitored by the same source control root as the target application that needs to be deployed.

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Amazon.ElasticBeanstalk.Model;
 using Amazon.Runtime;
 using AWS.Deploy.Common;
+using AWS.Deploy.Common.DeploymentManifest;
 using AWS.Deploy.Common.IO;
 using AWS.Deploy.Common.Recipes;
 using AWS.Deploy.Common.Recipes.Validation;
@@ -24,9 +25,21 @@ namespace AWS.Deploy.Orchestration.UnitTests
     {
         private readonly IOptionSettingHandler _optionSettingHandler;
         private readonly IServiceProvider _serviceProvider;
+        private readonly ICustomRecipeLocator _customRecipeLocator;
+        private readonly IDeploymentManifestEngine _deploymentManifestEngine;
+        private readonly Mock<IOrchestratorInteractiveService> _orchestratorInteractiveService;
+        private readonly IDirectoryManager _directoryManager;
+        private readonly IFileManager _fileManager;
+        private readonly IRecipeHandler _recipeHandler;
 
         public ElasticBeanstalkHandlerTests()
         {
+            _directoryManager = new DirectoryManager();
+            _fileManager = new FileManager();
+            _deploymentManifestEngine = new DeploymentManifestEngine(_directoryManager, _fileManager);
+            _orchestratorInteractiveService = new Mock<IOrchestratorInteractiveService>();
+            _customRecipeLocator = new CustomRecipeLocator(_deploymentManifestEngine, _orchestratorInteractiveService.Object, _directoryManager);
+            _recipeHandler = new RecipeHandler(_customRecipeLocator);
             _serviceProvider = new Mock<IServiceProvider>().Object;
             _optionSettingHandler = new OptionSettingHandler(new ValidatorFactory(_serviceProvider));
         }
@@ -143,7 +156,7 @@ namespace AWS.Deploy.Orchestration.UnitTests
                 AWSProfileName = "default"
             };
 
-            return new RecommendationEngine.RecommendationEngine(new[] { RecipeLocator.FindRecipeDefinitionsPath() }, session);
+            return new RecommendationEngine.RecommendationEngine(session, _recipeHandler);
         }
 
         private bool IsEqual(ConfigurationOptionSetting expected, ConfigurationOptionSetting actual)

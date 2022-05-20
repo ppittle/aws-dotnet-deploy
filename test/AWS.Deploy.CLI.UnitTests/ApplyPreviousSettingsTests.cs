@@ -19,6 +19,7 @@ using Xunit;
 using Assert = Should.Core.Assertions.Assert;
 using AWS.Deploy.Common.Recipes;
 using AWS.Deploy.Common.Recipes.Validation;
+using AWS.Deploy.Common.DeploymentManifest;
 
 namespace AWS.Deploy.CLI.UnitTests
 {
@@ -27,10 +28,21 @@ namespace AWS.Deploy.CLI.UnitTests
         private readonly IOptionSettingHandler _optionSettingHandler;
         private readonly Orchestrator _orchestrator;
         private readonly IServiceProvider _serviceProvider;
-
+        private readonly ICustomRecipeLocator _customRecipeLocator;
+        private readonly IDeploymentManifestEngine _deploymentManifestEngine;
+        private readonly IOrchestratorInteractiveService _orchestratorInteractiveService;
+        private readonly IDirectoryManager _directoryManager;
+        private readonly IFileManager _fileManager;
+        private readonly IRecipeHandler _recipeHandler;
 
         public ApplyPreviousSettingsTests()
         {
+            _directoryManager = new DirectoryManager();
+            _fileManager = new FileManager();
+            _deploymentManifestEngine = new DeploymentManifestEngine(_directoryManager, _fileManager);
+            _orchestratorInteractiveService = new TestToolOrchestratorInteractiveService();
+            _customRecipeLocator = new CustomRecipeLocator(_deploymentManifestEngine, _orchestratorInteractiveService, _directoryManager);
+            _recipeHandler = new RecipeHandler(_customRecipeLocator);
             _serviceProvider = new Mock<IServiceProvider>().Object;
             _optionSettingHandler = new OptionSettingHandler(new ValidatorFactory(_serviceProvider));
             _orchestrator = new Orchestrator(null, null, null, null, null, null, null, null, null, null, null, null, null, null, _optionSettingHandler);
@@ -40,7 +52,7 @@ namespace AWS.Deploy.CLI.UnitTests
         {
             var fullPath = SystemIOUtilities.ResolvePath(testProjectName);
 
-            var parser = new ProjectDefinitionParser(new FileManager(), new DirectoryManager());
+            var parser = new ProjectDefinitionParser(_fileManager, _directoryManager);
             var awsCredentials = new Mock<AWSCredentials>();
             var session =  new OrchestratorSession(
                 await parser.Parse(fullPath),
@@ -51,7 +63,7 @@ namespace AWS.Deploy.CLI.UnitTests
                 AWSProfileName = "default"
             };
 
-            return new RecommendationEngine(new[] { RecipeLocator.FindRecipeDefinitionsPath() }, session);
+            return new RecommendationEngine(session, _recipeHandler);
         }
 
         [Theory]

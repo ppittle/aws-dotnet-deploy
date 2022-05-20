@@ -53,6 +53,7 @@ namespace AWS.Deploy.CLI.Commands
         private readonly IAWSServiceHandler _awsServiceHandler;
         private readonly IOptionSettingHandler _optionSettingHandler;
         private readonly IValidatorFactory _validatorFactory;
+        private readonly IRecipeHandler _recipeHandler;
 
         public DeployCommand(
             IServiceProvider serviceProvider,
@@ -78,7 +79,8 @@ namespace AWS.Deploy.CLI.Commands
             IFileManager fileManager,
             IAWSServiceHandler awsServiceHandler,
             IOptionSettingHandler optionSettingHandler,
-            IValidatorFactory validatorFactory)
+            IValidatorFactory validatorFactory,
+            IRecipeHandler recipeHandler)
         {
             _serviceProvider = serviceProvider;
             _toolInteractiveService = toolInteractiveService;
@@ -104,6 +106,7 @@ namespace AWS.Deploy.CLI.Commands
             _awsServiceHandler = awsServiceHandler;
             _optionSettingHandler = optionSettingHandler;
             _validatorFactory = validatorFactory;
+            _recipeHandler = recipeHandler;
         }
 
         public async Task ExecuteAsync(string applicationName, string deploymentProjectPath, UserDeploymentSettings? userDeploymentSettings = null)
@@ -166,7 +169,7 @@ namespace AWS.Deploy.CLI.Commands
                     _localUserSettingsEngine,
                     _dockerEngine,
                     _customRecipeLocator,
-                    new List<string> { RecipeLocator.FindRecipeDefinitionsPath() },
+                    _recipeHandler,
                     _fileManager,
                     _directoryManager,
                     _awsServiceHandler,

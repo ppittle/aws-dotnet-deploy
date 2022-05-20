@@ -35,7 +35,7 @@ namespace AWS.Deploy.Orchestration
         internal readonly IDeploymentBundleHandler? _deploymentBundleHandler;
         internal readonly ILocalUserSettingsEngine? _localUserSettingsEngine;
         internal readonly IDockerEngine? _dockerEngine;
-        internal readonly IList<string>? _recipeDefinitionPaths;
+        internal readonly IRecipeHandler? _recipeHandler;
         internal readonly IFileManager? _fileManager;
         internal readonly IDirectoryManager? _directoryManager;
         internal readonly ICustomRecipeLocator? _customRecipeLocator;
@@ -54,7 +54,7 @@ namespace AWS.Deploy.Orchestration
             ILocalUserSettingsEngine localUserSettingsEngine,
             IDockerEngine dockerEngine,
             ICustomRecipeLocator customRecipeLocator,
-            IList<string> recipeDefinitionPaths,
+            IRecipeHandler recipeHandler,
             IFileManager fileManager,
             IDirectoryManager directoryManager,
             IAWSServiceHandler awsServiceHandler,
@@ -69,7 +69,7 @@ namespace AWS.Deploy.Orchestration
             _deploymentBundleHandler = deploymentBundleHandler;
             _dockerEngine = dockerEngine;
             _customRecipeLocator = customRecipeLocator;
-            _recipeDefinitionPaths = recipeDefinitionPaths;
+            _recipeHandler = recipeHandler;
             _localUserSettingsEngine = localUserSettingsEngine;
             _fileManager = fileManager;
             _directoryManager = directoryManager;
@@ -77,10 +77,9 @@ namespace AWS.Deploy.Orchestration
             _optionSettingHandler = optionSettingHandler;
         }
 
-        public Orchestrator(OrchestratorSession session, IList<string> recipeDefinitionPaths)
+        public Orchestrator(OrchestratorSession session)
         {
             _session = session;
-            _recipeDefinitionPaths = recipeDefinitionPaths;
         }
 
         /// <summary>
@@ -90,17 +89,12 @@ namespace AWS.Deploy.Orchestration
         /// <exception cref="InvalidOperationException"></exception>
         public async Task<List<Recommendation>> GenerateDeploymentRecommendations()
         {
-            if (_recipeDefinitionPaths == null)
-                throw new InvalidOperationException($"{nameof(_recipeDefinitionPaths)} is null as part of the orchestartor object");
             if (_session == null)
                 throw new InvalidOperationException($"{nameof(_session)} is null as part of the orchestartor object");
-
-            var targetApplicationFullPath = new DirectoryInfo(_session.ProjectDefinition.ProjectPath).FullName;
-            var solutionDirectoryPath = !string.IsNullOrEmpty(_session.ProjectDefinition.ProjectSolutionPath) ?
-                new DirectoryInfo(_session.ProjectDefinition.ProjectSolutionPath).Parent.FullName : string.Empty;
-
-            var customRecipePaths = await LocateCustomRecipePaths(targetApplicationFullPath, solutionDirectoryPath);
-            var engine = new RecommendationEngine.RecommendationEngine(_recipeDefinitionPaths.Union(customRecipePaths), _session);
+            if (_recipeHandler == null)
+                throw new InvalidOperationException($"{nameof(_recipeHandler)} is null as part of the orchestartor object");
+            
+            var engine = new RecommendationEngine.RecommendationEngine(_session, _recipeHandler);
             return await engine.ComputeRecommendations();
         }
 
@@ -111,12 +105,12 @@ namespace AWS.Deploy.Orchestration
         /// <exception cref="InvalidOperationException"></exception>
         public async Task<List<Recommendation>> GenerateRecommendationsToSaveDeploymentProject()
         {
-            if (_recipeDefinitionPaths == null)
-                throw new InvalidOperationException($"{nameof(_recipeDefinitionPaths)} is null as part of the orchestartor object");
             if (_session == null)
                 throw new InvalidOperationException($"{nameof(_session)} is null as part of the orchestartor object");
-
-            var engine = new RecommendationEngine.RecommendationEngine(_recipeDefinitionPaths, _session);
+            if (_recipeHandler == null)
+                throw new InvalidOperationException($"{nameof(_recipeHandler)} is null as part of the orchestartor object");
+            
+            var engine = new RecommendationEngine.RecommendationEngine(_session, _recipeHandler);
             var compatibleRecommendations = await engine.ComputeRecommendations();
             var cdkRecommendations = compatibleRecommendations.Where(x => x.Recipe.DeploymentType == DeploymentTypes.CdkProject).ToList();
             return cdkRecommendations;
@@ -133,13 +127,15 @@ namespace AWS.Deploy.Orchestration
         {
             if (_session == null)
                 throw new InvalidOperationException($"{nameof(_session)} is null as part of the orchestartor object");
+            if (_recipeHandler == null)
+                throw new InvalidOperationException($"{nameof(_recipeHandler)} is null as part of the orchestartor object");
             if (_directoryManager == null)
                 throw new InvalidOperationException($"{nameof(_directoryManager)} is null as part of the orchestartor object");
             if (!_directoryManager.Exists(deploymentProjectPath))
                 throw new InvalidCliArgumentException(DeployToolErrorCode.DeploymentProjectPathNotFound, $"The path '{deploymentProjectPath}' does not exists on the file system. Please provide a valid deployment project path and try again.");
 
-            var engine = new RecommendationEngine.RecommendationEngine(new List<string> { deploymentProjectPath }, _session);
-            return await engine.ComputeRecommendations();
+            var engine = new RecommendationEngine.RecommendationEngine(_session, _recipeHandler);
+            return await engine.ComputeRecommendations(recipeDefinitionPaths: new List<string> { deploymentProjectPath });
         }
 
         /// <summary>
@@ -198,7 +194,7 @@ namespace AWS.Deploy.Orchestration
         public async Task CreateDeploymentBundle(CloudApplication cloudApplication, Recommendation recommendation)
         {
             if (_interactiveService == null)
-                throw new InvalidOperationException($"{nameof(_recipeDefinitionPaths)} is null as part of the orchestartor object");
+                throw new InvalidOperationException($"{nameof(_interactiveService)} is null as part of the orchestartor object");
 
             if (recommendation.Recipe.DeploymentBundle == DeploymentBundleTypes.Container)
             {
@@ -231,7 +227,7 @@ namespace AWS.Deploy.Orchestration
         private async Task CreateContainerDeploymentBundle(CloudApplication cloudApplication, Recommendation recommendation)
         {
             if (_interactiveService == null)
-                throw new InvalidOperationException($"{nameof(_recipeDefinitionPaths)} is null as part of the orchestartor object");
+                throw new InvalidOperationException($"{nameof(_interactiveService)} is null as part of the orchestartor object");
             if (_dockerEngine == null)
                 throw new InvalidOperationException($"{nameof(_dockerEngine)} is null as part of the orchestartor object");
             if (_deploymentBundleHandler == null)

@@ -234,7 +234,7 @@ namespace AWS.Deploy.CLI.IntegrationTests.SaveCdkDeploymentProject
             var deploymentManifestEngine = new DeploymentManifestEngine(directoryManager, fileManager);
             var localUserSettingsEngine = new LocalUserSettingsEngine(fileManager, directoryManager);
             var customRecipeLocator = new CustomRecipeLocator(deploymentManifestEngine, _inMemoryInteractiveService, directoryManager);
-
+            var recipeHandler = new RecipeHandler(customRecipeLocator);
             var projectDefinition = await new ProjectDefinitionParser(fileManager, directoryManager).Parse(targetApplicationProjectPath);
             var session = new OrchestratorSession(projectDefinition);
 
@@ -248,7 +248,7 @@ namespace AWS.Deploy.CLI.IntegrationTests.SaveCdkDeploymentProject
                 localUserSettingsEngine,
                 new Mock<IDockerEngine>().Object,
                 customRecipeLocator,
-                new List<string> { RecipeLocator.FindRecipeDefinitionsPath() },
+                recipeHandler,
                 fileManager,
                 directoryManager,
                 new Mock<IAWSServiceHandler>().Object,

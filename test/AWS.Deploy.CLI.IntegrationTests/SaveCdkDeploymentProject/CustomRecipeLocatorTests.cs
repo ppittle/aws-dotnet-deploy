@@ -12,6 +12,7 @@ using Task = System.Threading.Tasks.Task;
 using Should;
 using AWS.Deploy.CLI.Common.UnitTests.IO;
 using AWS.Deploy.CLI.IntegrationTests.Services;
+using AWS.Deploy.Common.Recipes;
 
 namespace AWS.Deploy.CLI.IntegrationTests.SaveCdkDeploymentProject
 {

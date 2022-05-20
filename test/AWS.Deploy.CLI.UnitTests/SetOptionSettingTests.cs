@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Amazon.Runtime;
 using AWS.Deploy.CLI.UnitTests.Utilities;
 using AWS.Deploy.Common;
+using AWS.Deploy.Common.DeploymentManifest;
 using AWS.Deploy.Common.IO;
 using AWS.Deploy.Common.Recipes;
 using AWS.Deploy.Common.Recipes.Validation;
@@ -25,10 +26,22 @@ namespace AWS.Deploy.CLI.UnitTests
         private readonly List<Recommendation> _recommendations;
         private readonly IOptionSettingHandler _optionSettingHandler;
         private readonly IServiceProvider _serviceProvider;
+        private readonly ICustomRecipeLocator _customRecipeLocator;
+        private readonly IDeploymentManifestEngine _deploymentManifestEngine;
+        private readonly IOrchestratorInteractiveService _orchestratorInteractiveService;
+        private readonly IDirectoryManager _directoryManager;
+        private readonly IFileManager _fileManager;
+        private readonly IRecipeHandler _recipeHandler;
 
         public SetOptionSettingTests()
         {
             var projectPath = SystemIOUtilities.ResolvePath("WebAppNoDockerFile");
+            _directoryManager = new DirectoryManager();
+            _fileManager = new FileManager();
+            _deploymentManifestEngine = new DeploymentManifestEngine(_directoryManager, _fileManager);
+            _orchestratorInteractiveService = new TestToolOrchestratorInteractiveService();
+            _customRecipeLocator = new CustomRecipeLocator(_deploymentManifestEngine, _orchestratorInteractiveService, _directoryManager);
+            _recipeHandler = new RecipeHandler(_customRecipeLocator);
 
             var parser = new ProjectDefinitionParser(new FileManager(), new DirectoryManager());
             var awsCredentials = new Mock<AWSCredentials>();
@@ -41,7 +54,7 @@ namespace AWS.Deploy.CLI.UnitTests
                 AWSProfileName = "default"
             };
 
-            var engine = new RecommendationEngine(new[] { RecipeLocator.FindRecipeDefinitionsPath() }, session);
+            var engine = new RecommendationEngine(session, _recipeHandler);
             _recommendations = engine.ComputeRecommendations().GetAwaiter().GetResult();
             _serviceProvider = new Mock<IServiceProvider>().Object;
             _optionSettingHandler = new OptionSettingHandler(new ValidatorFactory(_serviceProvider));
